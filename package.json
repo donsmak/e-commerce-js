@@ -1,0 +1,48 @@
+{
+  "name": "e-commerce-js",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "migrate": "node src/db/init.js",
+    "migrate:dev": "cross-env NODE_ENV=development node src/db/init.js",
+    "migrate:prod": "cross-env NODE_ENV=production node src/db/init.js",
+    "db:init": "node src/db/init.js",
+    "db:reset": "node src/db/reset.js && node src/db/init.js",
+    "test": "jest",
+    "lint": "eslint src/",
+    "format": "prettier --write 'src/**/*.{js,json}'",
+    "build:css": "tailwindcss -i ./public/css/input.css -o ./public/css/output.css",
+    "watch:css": "tailwindcss -i ./public/css/input.css -o ./public/css/output.css --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "axios": "^1.7.8",
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.1",
+    "express-async-handler": "^1.2.0",
+    "express-validator": "^7.2.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "1.4.5-lts.1",
+    "nodemailer": "^6.9.16",
+    "sqlite3": "^5.1.7",
+    "uuid": "^11.0.3",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.20",
+    "cross-env": "^7.0.3",
+    "dotenv-flow": "^4.1.0",
+    "morgan": "^1.10.0",
+    "nodemon": "^3.1.7",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.16"
+  }
+}

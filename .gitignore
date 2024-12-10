@@ -1,0 +1,16 @@
+# Environment files
+.env*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Build outputs
+public/css/outputs.css
+
+# Database
+database/*.sqlite
+
+# Logs
+logs/
+*.log
