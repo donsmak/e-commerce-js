@@ -55,11 +55,12 @@ class Database {
 
   queryOne(sql, params = []) {
     return new Promise((resolve, reject) => {
-      this.getInstance().run(sql, params, (err, row) => {
+      this.db.get(sql, params, (err, row) => {
         if (err) {
-          logger.error('Database query error:', err);
+          console.error('Database error:', err);
           reject(err);
         } else {
+          console.log('Query result:', row); // Debug log
           resolve(row);
         }
       });
@@ -68,14 +69,14 @@ class Database {
 
   execute(sql, params = []) {
     return new Promise((resolve, reject) => {
-      this.getInstance().run(sql, params, function (err) {
+      this.db.run(sql, params, function(err) {
         if (err) {
-          logger.error('Database execute error:', err);
+          console.error('Database execute error:', err);
           reject(err);
         } else {
           resolve({
             lastID: this.lastID,
-            changes: this.changes,
+            changes: this.changes
           });
         }
       });

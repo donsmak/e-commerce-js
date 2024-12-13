@@ -15,21 +15,18 @@ async function initializeDatabase() {
 
     // Get all migration files
     const migrationFiles = (await fs.readdir(path.join(__dirname, 'migrations')))
-      .filter(file => file.endsWith('.sql'))
+      .filter((file) => file.endsWith('.sql'))
       .sort();
 
     // Execute migrations in order
     for (const migrationFile of migrationFiles) {
       const hasRun = await migrations.hasMigrationRun(migrationFile);
-      
+
       if (!hasRun) {
         logger.info(`Running migration: ${migrationFile}`);
-        
-        const sql = await fs.readFile(
-          path.join(__dirname, 'migrations', migrationFile),
-          'utf8'
-        );
-        
+
+        const sql = await fs.readFile(path.join(__dirname, 'migrations', migrationFile), 'utf8');
+
         await new Promise((resolve, reject) => {
           db.getInstance().exec(sql, async (err) => {
             if (err) {
@@ -40,7 +37,7 @@ async function initializeDatabase() {
             }
           });
         });
-        
+
         logger.info(`Completed migration: ${migrationFile}`);
       }
     }
@@ -67,9 +64,33 @@ async function initializeDatabase() {
   }
 }
 
+async function checkDatabase() {
+  const db = require('./connection');
+  try {
+    // Check products table
+    const products = await db.query('SELECT COUNT(*) as count FROM products');
+    console.log('Products in database:', products[0].count);
+
+    // Check cart_items table
+    const cartItems = await db.query('SELECT COUNT(*) as count FROM cart_items');
+    console.log('Cart items in database:', cartItems[0].count);
+
+    // Check table structure
+    const productStructure = await db.query('PRAGMA table_info(products)');
+    console.log('Products table structure:', productStructure);
+
+    const cartStructure = await db.query('PRAGMA table_info(cart_items)');
+    console.log('Cart items table structure:', cartStructure);
+  } catch (error) {
+    console.error('Database check failed:', error);
+    throw error;
+  }
+}
+
 // Only run initialization if this file is being run directly
 if (require.main === module) {
   initializeDatabase()
+    .then(checkDatabase)
     .then(() => process.exit(0))
     .catch((error) => {
       console.error('Failed to initialize database:', error);
@@ -78,4 +99,3 @@ if (require.main === module) {
 }
 
 module.exports = initializeDatabase;
-

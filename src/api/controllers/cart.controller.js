@@ -47,14 +47,18 @@ class CartController {
       if (!sessionId) {
         sessionId = uuidv4();
         res.cookie('cartSessionId', sessionId, {
-          maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+          maxAge: 30 * 24 * 60 * 60 * 1000,
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
         });
       }
 
       const { productId, quantity = 1 } = req.body;
+      
+      console.log('Adding to cart:', { sessionId, productId, quantity }); // Debug log
 
+      // Validate productId
       if (!productId) {
         return res.status(400).json({
           success: false,
@@ -62,40 +66,65 @@ class CartController {
         });
       }
 
-      const product = await db.queryOne('SELECT id FROM products WHERE id = ?', [productId]);
+      // Check if product exists
+      const product = await db.queryOne(
+        'SELECT * FROM products WHERE id = ?', 
+        [productId]
+      );
+      
+      console.log('Found product:', product); // Debug log
 
       if (!product) {
         return res.status(404).json({
           success: false,
-          message: 'Product not found',
+          message: `Product with ID ${productId} not found`,
+          debug: { productId, query: 'SELECT * FROM products WHERE id = ?' }
         });
       }
 
-      await db.execute(
-        `
-        INSERT INTO cart_items (session_id, product_id, quantity)
-        VALUES (?, ?, ?)
-        ON CONFLICT(session_id, product_id) DO UPDATE SET quantity = quantity + ?
-        `,
-        [sessionId, productId, quantity, quantity]
-      );
+      // Begin transaction
+      await db.execute('BEGIN TRANSACTION');
 
-      const updatedCart = await db.query(
-        `
-          SELECT ci.*, p.title, p.price, p.image, (p.price * ci.quantity) as total_price
-          FROM cart_items ci
-          JOIN products p ON ci.product_id = p.id
-          WHERE ci.session_id = ?
-        `,
-        [sessionId]
-      );
+      try {
+        // Insert or update cart item
+        const result = await db.execute(
+          `INSERT INTO cart_items (session_id, product_id, quantity)
+           VALUES (?, ?, ?)
+           ON CONFLICT(session_id, product_id) 
+           DO UPDATE SET quantity = quantity + ?`,
+          [sessionId, productId, quantity, quantity]
+        );
+        
+        console.log('Insert/Update result:', result); // Debug log
 
-      res.json({ success: true, data: updatedCart });
+        // Get updated cart
+        const updatedCart = await db.query(
+          `SELECT 
+            ci.*,
+            p.title,
+            p.price,
+            p.image,
+            (p.price * ci.quantity) as total_price
+           FROM cart_items ci
+           JOIN products p ON ci.product_id = p.id
+           WHERE ci.session_id = ?`,
+          [sessionId]
+        );
+        
+        console.log('Updated cart:', updatedCart); // Debug log
+
+        await db.execute('COMMIT');
+        res.json({ success: true, data: updatedCart });
+      } catch (error) {
+        await db.execute('ROLLBACK');
+        throw error;
+      }
     } catch (error) {
       logger.error('Error adding to cart:', error);
       res.status(500).json({
         success: false,
-        message: error.message,
+        message: error.message || 'Error adding item to cart',
+        debug: error.stack
       });
     }
   }

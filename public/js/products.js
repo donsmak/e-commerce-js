@@ -101,16 +101,31 @@ class ProductDisplay {
     });
   }
 
-  handleAddToCart(productId) {
-    // Prevent the click from bubbling up to document
+  handleAddToCart(productId, event) {
     if (event) {
-      event.stopImmediatePropagation();
+      event.stopPropagation();
     }
-    // FInd the product in our products array
-    const product = this.products.find((p) => p.id === Number(productId));
-    if (product && window.cart) {
-      window.cart.addToCart(product);
+
+    console.log('ProductDisplay handleAddToCart:', productId); // Debug log
+
+    // Convert productId to number
+    const numericProductId = Number(productId);
+
+    // Find product
+    const product = this.products.find((p) => p.id === numericProductId);
+    console.log('Found product:', product); // Debug log
+
+    if (!product) {
+      console.error('Product not found:', productId);
+      return;
     }
+
+    if (!window.cart) {
+      console.error('Cart not initialized');
+      return;
+    }
+
+    window.cart.addToCart(product);
   }
 
   handleError(error) {
